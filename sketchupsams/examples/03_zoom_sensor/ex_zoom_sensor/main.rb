@@ -3,32 +3,7 @@
 
 require 'sketchup.rb'
 require 'logger'
-
-class Geom::Transformation
-  def to_matrix
-    a = self.to_a
-    f = "%8.3f"
-    l = [f, f, f, f].join("  ") + "\n"
-    str =  sprintf l,  a[0], a[1], a[2], a[3]
-    str += sprintf l,  a[4], a[5], a[6], a[7]
-    str += sprintf l,  a[8], a[9], a[10], a[11]
-    str += sprintf l,  a[12], a[13], a[14], a[15]
-    str
-  end
-  def to_matrix_log(logger)
-    a = self.to_a
-    f = "%8.3f"
-    l = [f, f, f, f].join("  ")
-    str1 =  sprintf l,  a[0], a[1], a[2], a[3]
-    logger.info("#{str1}")
-    str2 = sprintf l,  a[4], a[5], a[6], a[7]
-    logger.info("#{str2}")
-    str3 = sprintf l,  a[8], a[9], a[10], a[11]
-    logger.info("#{str3}")
-    str4 = sprintf l,  a[12], a[13], a[14], a[15]
-    logger.info("#{str4}")
-  end
-end
+require 'examples/sumlib'
 
 module Examples
   module ZoomSensor
@@ -52,6 +27,7 @@ module Examples
           t = obj.transformation unless obj.nil?
         else
           obj = nil
+          logger.info("Didn't find #{sensor_def}-#{sensor_name}")
         end
       end
 
@@ -63,18 +39,23 @@ module Examples
       sel = model.selection
       sel.add obj unless obj.nil?
 
-      # Show sensor origin & rotation
-      #pt_origin = t.origin unless obj.nil?
-      #x = t.xaxis unless obj.nil?
-      #y = t.yaxis unless obj.nil?
-      #z = t.zaxis unless obj.nil?
-
-      # Show sensor transform matrix
-      #str_mat = t.to_matrix
-      #UI.messagebox "#{str_mat}" unless obj.nil?
-
       # Write sensor transform info to log file
       t.to_matrix_log(logger)
+
+      # Just showing off here with regular expression matching
+      dname = "SAMS_SE" # FIXME this might be just SAMS_ to get both SE and TSH?
+      matches = dlist.find_all {|d|
+        !d.group? && !d.image? && d.name =~ /\A(#{dname})/
+      }
+      total = 0
+      matches.each {|definition|
+        number = definition.count_used_instances
+        next if number < 1
+        total += number
+        logger.info("Found #{total} sensors like '#{dname}' #{definition.name}")
+      }
+
+      #t.say_hello(logger)
 
     end
 
@@ -83,6 +64,7 @@ module Examples
 
       logger = Logger.new('/Users/ken/log/rubysketchup_zoomsensor.log', 10, 1024000)
       logger.level = Logger::DEBUG
+      logger.info("-"*40)
       logger.debug("Created logger")
       logger.info("Program start")
 
