@@ -29,6 +29,7 @@ module Examples
                 logger.info("Found #{ins_name}")
                 t = ins.transformation
                 t.to_matrix_log(logger)
+                t.extract_euler(logger)
               }
           end
         else
